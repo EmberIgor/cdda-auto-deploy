@@ -74,7 +74,7 @@ def download_cdda(page_url, label):
     # 设置块大小
     block_size = 1024
     # 创建进度条
-    progress_bar = tqdm(total=file_size if file_size > 0 else None, unit='iB', unit_scale=True, desc=file_name)
+    progress_bar = tqdm(total=file_size if file_size > 0 else None, unit='iB', unit_scale=True, desc="CDDA下载进度")
     # 使用GET请求下载文件
     with requests.get(download_url, stream=True) as response:
         with open(file_name, 'wb') as file:
@@ -106,7 +106,7 @@ def save_backup():
         # 获取当前时间
         current_time = datetime.now()
         # 将时间格式化为 "yyyy-mm-dd-hh-mm-ss" 的形式
-        formatted_time = current_time.strftime("%Y-%m-%d-%H:%M:%S")
+        formatted_time = current_time.strftime("%Y-%m-%d-%H.%M.%S")
         # 复制文件
         copy_directory_contents('./CDDA/save', f'./SaveBackup/{formatted_time}')
         print("存档备份完成！")
@@ -144,7 +144,6 @@ def copy_directory_contents(src, dst):
     # 确保目标目录存在
     if not os.path.exists(dst):
         os.makedirs(dst)
-
     # 获取源目录中的文件列表，包括子目录中的文件
     files_to_copy = [os.path.join(dp, f) for dp, dn, filenames in os.walk(src) for f in filenames]
     total_files = len(files_to_copy)

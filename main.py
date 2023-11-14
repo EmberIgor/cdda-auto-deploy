@@ -25,6 +25,7 @@ def main_menu():
             if user_choose <= len(options) + 1:
                 if user_choose == len(options) + 1:
                     break
+                os.system('cls')
                 options[user_choose - 1].func()
             else:
                 print("超出选择范围")
