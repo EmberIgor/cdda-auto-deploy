@@ -68,19 +68,19 @@ def download_cdda(page_url, label):
     parsed_url = urlparse(download_url)
     file_name = os.path.basename(parsed_url.path)
     # 发送HEAD请求获取文件大小
-    response = requests.head(download_url)
-    file_size = int(response.headers.get('content-length', 0))
+    response_get = requests.get(download_url, stream=True)
+    file_size = int(response_get.headers.get('content-length', 0))
+    response_get.close()
     # 设置块大小
     block_size = 1024
-    response = requests.get(download_url, stream=True)
     # 创建进度条
-    # progress_bar = tqdm(total=file_size, unit='iB', unit_scale=True)
-    progress_bar = tqdm(total=file_size, unit='iB', unit_scale=True, file=sys.stdout)
-    # 写入文件
-    with open(file_name, 'wb') as file:
-        for data in response.iter_content(block_size):
-            progress_bar.update(len(data))
-            file.write(data)
+    progress_bar = tqdm(total=file_size if file_size > 0 else None, unit='iB', unit_scale=True, desc=file_name)
+    # 使用GET请求下载文件
+    with requests.get(download_url, stream=True) as response:
+        with open(file_name, 'wb') as file:
+            for data in response.iter_content(block_size):
+                progress_bar.update(len(data))
+                file.write(data)
         progress_bar.close()
     # 解压文件
     print("正在解压文件……请不要关闭窗口")
