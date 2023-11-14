@@ -1,3 +1,5 @@
+import sys
+
 import requests
 from bs4 import BeautifulSoup
 import configparser
@@ -27,19 +29,19 @@ def find_config():
 
 
 # 获取cdda最新发行版
-def get_cdda_latest():
+def get_cdda_latest(offset=0):
     global config
     global config_file
-    print("正在查询最新版cdda……")
+    print("正在查询最新版cdda……" if offset == 0 else f"正在查询前{offset}版cdda……")
     cdda_release_page = requests.get("https://github.com/CleverRaven/Cataclysm-DDA/tags")
     soup = BeautifulSoup(cdda_release_page.text, 'html.parser')
-    a_link = soup.find('a', class_="Link--primary Link")
+    a_link = soup.find_all('a', class_="Link--primary Link")
     last_release = {
-        "label": a_link.text,
-        "href": ("https://github.com" + a_link.get('href')).replace('tag', 'expanded_assets')
+        "label": a_link[offset].text,
+        "href": ("https://github.com" + a_link[offset].get('href')).replace('tag', 'expanded_assets')
     }
     if last_release["label"] == config.get('Settings', 'cdda_version'):
-        print(f"当前为最新版本{last_release['label']}，无需更新。")
+        print(f"当前为符合设定的最新版本{last_release['label']}，无需更新。")
     else:
         print(f"发现新版本{last_release['label']}，即将开始更新。")
         folder_name = "CDDA"
@@ -54,9 +56,14 @@ def download_cdda(page_url, label):
     res = requests.get(page_url)
     soup = BeautifulSoup(res.text, 'html.parser')
     search_text = "cdda-windows-tiles-sounds-x64"
+    target_link = soup.find(string=lambda text: search_text in text)
+    if target_link is None:
+        print("最新版本暂未发布您选择的系统版本。检查次新版本")
+        get_cdda_latest(1)
+        return
     download_url = (
             "https://github.com" +
-            soup.find_all(string=lambda text: search_text in text)[0].find_parent('a').get('href')
+            target_link.find_parent('a').get('href')
     )
     parsed_url = urlparse(download_url)
     file_name = os.path.basename(parsed_url.path)
@@ -67,7 +74,8 @@ def download_cdda(page_url, label):
     block_size = 1024
     response = requests.get(download_url, stream=True)
     # 创建进度条
-    progress_bar = tqdm(total=file_size, unit='iB', unit_scale=True)
+    # progress_bar = tqdm(total=file_size, unit='iB', unit_scale=True)
+    progress_bar = tqdm(total=file_size, unit='iB', unit_scale=True, file=sys.stdout)
     # 写入文件
     with open(file_name, 'wb') as file:
         for data in response.iter_content(block_size):
