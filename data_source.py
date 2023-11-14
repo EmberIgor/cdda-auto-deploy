@@ -98,7 +98,7 @@ def save_backup():
         # 获取当前时间
         current_time = datetime.now()
         # 将时间格式化为 "yyyy-mm-dd-hh-mm-ss" 的形式
-        formatted_time = current_time.strftime("%Y-%m-%d-%H-%M-%S")
+        formatted_time = current_time.strftime("%Y-%m-%d-%H:%M:%S")
         # 复制文件
         copy_directory_contents('./CDDA/save', f'./SaveBackup/{formatted_time}')
         print("存档备份完成！")
