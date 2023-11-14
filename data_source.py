@@ -5,6 +5,7 @@ import os
 from urllib.parse import urlparse
 from tqdm import tqdm
 import shutil
+from datetime import datetime
 
 config_file = 'config.ini'
 config = configparser.ConfigParser()
@@ -29,6 +30,7 @@ def find_config():
 def get_cdda_latest():
     global config
     global config_file
+    print("正在查询最新版cdda……")
     cdda_release_page = requests.get("https://github.com/CleverRaven/Cataclysm-DDA/tags")
     soup = BeautifulSoup(cdda_release_page.text, 'html.parser')
     a_link = soup.find('a', class_="Link--primary Link")
@@ -37,8 +39,9 @@ def get_cdda_latest():
         "href": ("https://github.com" + a_link.get('href')).replace('tag', 'expanded_assets')
     }
     if last_release["label"] == config.get('Settings', 'cdda_version'):
-        print(f"当前为最新版本{last_release['label']}，无需更新")
+        print(f"当前为最新版本{last_release['label']}，无需更新。")
     else:
+        print(f"发现新版本{last_release['label']}，即将开始更新。")
         folder_name = "CDDA"
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
@@ -80,3 +83,76 @@ def download_cdda(page_url, label):
     config.set('Settings', 'cdda_version', label)
     with open(config_file, 'w') as configfile:
         config.write(configfile)
+
+
+# 备份当前存档
+def save_backup():
+    # 检测存档是否存在
+    save_exists = os.path.isdir(os.path.join('./CDDA', 'save'))
+    if save_exists:
+        print("检测到存档存在,开始备份。")
+        # 检测备份文件夹是否存在，不存在则创建
+        backup_folder_name = "SaveBackup"
+        if not os.path.exists(backup_folder_name):
+            os.makedirs(backup_folder_name)
+        # 获取当前时间
+        current_time = datetime.now()
+        # 将时间格式化为 "yyyy-mm-dd-hh-mm-ss" 的形式
+        formatted_time = current_time.strftime("%Y-%m-%d-%H-%M-%S")
+        # 复制文件
+        copy_directory_contents('./CDDA/save', f'./SaveBackup/{formatted_time}')
+        print("存档备份完成！")
+    else:
+        print("未检测到存档。")
+
+
+# 覆盖存档
+def save_overwrite(src):
+    # 要清空的目录路径
+    directory = './CDDA/Save'
+    # 检测存档是否存在
+    # save_exists = os.path.isdir(os.path.join('./CDDA', 'save'))
+    # if save_exists:
+    #     print("检测到旧存档，正在清空存档文件夹……")
+    #     # 删除目录下的所有内容
+    #     for filename in os.listdir(directory):
+    #         file_path = os.path.join(directory, filename)
+    #         try:
+    #             if os.path.isfile(file_path) or os.path.islink(file_path):
+    #                 os.unlink(file_path)
+    #             elif os.path.isdir(file_path):
+    #                 shutil.rmtree(file_path)
+    #         except Exception as e:
+    #             print(f'清空目录失败. 原因: {e}')
+    # else:
+    #     os.makedirs('./CDDA/save', exist_ok=True)
+    print("开始导入选择的存档……")
+    copy_directory_contents(f'./SaveBackup/{src}', directory)
+    print("存档导入完成！")
+
+
+# 复制文件
+def copy_directory_contents(src, dst):
+    # 确保目标目录存在
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+
+    # 获取源目录中的文件列表，包括子目录中的文件
+    files_to_copy = [os.path.join(dp, f) for dp, dn, filenames in os.walk(src) for f in filenames]
+    total_files = len(files_to_copy)
+
+    # 创建tqdm进度条
+    with tqdm(total=total_files, unit='file', desc="复制文件") as pbar:
+        for file in files_to_copy:
+            # 构造源文件和目标文件的完整路径
+            dst_file = os.path.join(dst, os.path.relpath(file, src))
+            dst_dir = os.path.dirname(dst_file)
+
+            # 确保目标文件的目录存在
+            if not os.path.exists(dst_dir):
+                os.makedirs(dst_dir)
+
+            # 复制文件
+            shutil.copy2(file, dst_file)
+            # 更新进度条
+            pbar.update(1)
