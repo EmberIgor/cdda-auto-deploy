@@ -82,7 +82,6 @@ def download_cdda(page_url, label):
                 file.write(data)
         progress_bar.close()
     # 解压文件
-    print("正在解压文件……请不要关闭窗口")
     # 压缩文件的路径
     zip_path = file_name
     # 解压缩的目标文件夹
@@ -92,7 +91,7 @@ def download_cdda(page_url, label):
         # 获取所有文件的列表
         file_list = zip_ref.infolist()
         # 创建tqdm进度条
-        with tqdm(total=len(file_list), unit='file', desc=f"正在解压文件{file_name}") as progress_bar:
+        with tqdm(total=len(file_list), unit='file', desc=f"正在解压CDDA") as progress_bar:
             for file in file_list:
                 # 解压单个文件
                 zip_ref.extract(file, extract_path)
