@@ -105,7 +105,7 @@ def save_backup():
             os.makedirs(backup_folder_name)
         # 获取当前时间
         current_time = datetime.now()
-        # 将时间格式化为 "yyyy-mm-dd-hh-mm-ss" 的形式
+        # 将时间格式化为 "yyyy-mm-dd-hh.mm.ss" 的形式
         formatted_time = current_time.strftime("%Y-%m-%d-%H.%M.%S")
         # 复制文件
         copy_directory_contents('./CDDA/save', f'./SaveBackup/{formatted_time}')
@@ -119,21 +119,22 @@ def save_overwrite(src):
     # 要清空的目录路径
     directory = './CDDA/Save'
     # 检测存档是否存在
-    # save_exists = os.path.isdir(os.path.join('./CDDA', 'save'))
-    # if save_exists:
-    #     print("检测到旧存档，正在清空存档文件夹……")
-    #     # 删除目录下的所有内容
-    #     for filename in os.listdir(directory):
-    #         file_path = os.path.join(directory, filename)
-    #         try:
-    #             if os.path.isfile(file_path) or os.path.islink(file_path):
-    #                 os.unlink(file_path)
-    #             elif os.path.isdir(file_path):
-    #                 shutil.rmtree(file_path)
-    #         except Exception as e:
-    #             print(f'清空目录失败. 原因: {e}')
-    # else:
-    #     os.makedirs('./CDDA/save', exist_ok=True)
+    save_exists = os.path.isdir(os.path.join('./CDDA', 'save'))
+    if save_exists:
+        print("检测到旧存档，正在清空存档文件夹……")
+        # 删除目录下的所有内容
+        for filename in os.listdir(directory):
+            file_path = os.path.join(directory, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f'清空目录失败. 原因: {e}')
+    else:
+        os.makedirs('./CDDA/save', exist_ok=True)
+    # 导入存档
     print("开始导入选择的存档……")
     copy_directory_contents(f'./SaveBackup/{src}', directory)
     print("存档导入完成！")
