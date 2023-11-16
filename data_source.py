@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from tqdm import tqdm
 import shutil
 from datetime import datetime
+import zipfile
 
 config_file = 'config.ini'
 config = configparser.ConfigParser()
@@ -82,7 +83,21 @@ def download_cdda(page_url, label):
         progress_bar.close()
     # 解压文件
     print("正在解压文件……请不要关闭窗口")
-    shutil.unpack_archive(file_name, 'CDDA')
+    # 压缩文件的路径
+    zip_path = file_name
+    # 解压缩的目标文件夹
+    extract_path = 'CDDA'
+    # 打开压缩文件
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        # 获取所有文件的列表
+        file_list = zip_ref.infolist()
+        # 创建tqdm进度条
+        with tqdm(total=len(file_list), unit='file', desc=f"正在解压文件{file_name}") as progress_bar:
+            for file in file_list:
+                # 解压单个文件
+                zip_ref.extract(file, extract_path)
+                # 更新进度条
+                progress_bar.update(1)
     # 解压完成后删除原文件
     os.remove(file_name)
     # 更新config中记录的版本信息
