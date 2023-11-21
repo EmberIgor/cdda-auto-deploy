@@ -52,6 +52,7 @@ def save_overwrite():
         # 检查当前项是否为目录
         if os.path.isdir(os.path.join(directory_path, item)):
             folder_names.append(item)
+    folder_names = folder_names[::-1]
     folder_index = 0
     for folder in folder_names:
         print(f'{folder_index + 1}. {folder}')
