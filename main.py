@@ -34,7 +34,6 @@ def main_menu():
 
 
 def update_cdda():
-    data_source.find_config()
     data_source.get_cdda_latest()
 
 
