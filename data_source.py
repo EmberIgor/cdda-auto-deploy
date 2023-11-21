@@ -54,7 +54,7 @@ def download_cdda(page_url, label):
     # 获取下载链接和文件名
     res = requests.get(page_url)
     soup = BeautifulSoup(res.text, 'html.parser')
-    search_text = "cdda-windows-tiles-sounds-x64"
+    search_text = "cdda-windows-tiles-x64" if os.path.isdir('./CDDA') else "cdda-windows-tiles-sounds-x64"
     target_link = soup.find(string=lambda text: search_text in text)
     if target_link is None:
         print("最新版本暂未发布您选择的系统版本。检查次新版本")
