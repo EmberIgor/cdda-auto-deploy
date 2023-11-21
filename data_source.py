@@ -7,9 +7,11 @@ from tqdm import tqdm
 import shutil
 from datetime import datetime
 import zipfile
+import re
 
 config_file = 'config.ini'
 config = configparser.ConfigParser()
+game_dir = 'CDDA'
 
 
 # 检查是否有配置文件
@@ -29,24 +31,35 @@ def find_config():
 
 # 获取cdda最新发行版
 def get_cdda_latest(offset=0):
-    global config
-    global config_file
+    # global config
+    # global config_file
+    # print("正在查询最新版cdda……" if offset == 0 else f"正在查询前{offset}版cdda……")
+    # cdda_release_page = requests.get("https://github.com/CleverRaven/Cataclysm-DDA/tags")
+    # soup = BeautifulSoup(cdda_release_page.text, 'html.parser')
+    # a_link = soup.find_all('a', class_="Link--primary Link")
+    # last_release = {
+    #     "label": a_link[offset].text,
+    #     "href": ("https://github.com" + a_link[offset].get('href')).replace('tag', 'expanded_assets')
+    # }
+    # if last_release["label"] == config.get('Settings', 'cdda_version'):
+    #     print(f"当前为符合设定的最新版本{last_release['label']}，无需更新。")
+    # else:
+    #     print(f"发现新版本{last_release['label']}，即将开始更新。")
+    #     folder_name = "CDDA"
+    #     if not os.path.exists(folder_name):
+    #         os.makedirs(folder_name)
+    #     download_cdda(last_release["href"], last_release["label"])
+    global game_dir
     print("正在查询最新版cdda……" if offset == 0 else f"正在查询前{offset}版cdda……")
-    cdda_release_page = requests.get("https://github.com/CleverRaven/Cataclysm-DDA/tags")
-    soup = BeautifulSoup(cdda_release_page.text, 'html.parser')
-    a_link = soup.find_all('a', class_="Link--primary Link")
-    last_release = {
-        "label": a_link[offset].text,
-        "href": ("https://github.com" + a_link[offset].get('href')).replace('tag', 'expanded_assets')
-    }
-    if last_release["label"] == config.get('Settings', 'cdda_version'):
-        print(f"当前为符合设定的最新版本{last_release['label']}，无需更新。")
-    else:
-        print(f"发现新版本{last_release['label']}，即将开始更新。")
-        folder_name = "CDDA"
-        if not os.path.exists(folder_name):
-            os.makedirs(folder_name)
-        download_cdda(last_release["href"], last_release["label"])
+    last_release_info = get_git_last_release_info("https://github.com/CleverRaven/Cataclysm-DDA/tags", offset)
+    last_file_info = get_git_release_file_info(
+        last_release_info["repository_name"],
+        last_release_info["last_tag_name"],
+        "cdda-windows-tiles-x64" if os.path.isdir('./CDDA') else "cdda-windows-tiles-sounds-x64"
+    )
+    print(f"发现新版本{last_release_info['last_tag_name']}，即将开始更新。")
+    if not os.path.exists(game_dir):
+        os.makedirs(game_dir)
 
 
 # 下载最新cdda文件
@@ -176,3 +189,36 @@ def copy_directory_contents(src, dst):
             shutil.copy2(file, dst_file)
             # 更新进度条
             pbar.update(1)
+
+
+# 获取指定git url的发行版信息
+def get_git_last_release_info(release_url, offset=0):
+    pattern = r'github\.com\/([^\/]+\/[^\/]+)'
+    match = re.search(pattern, release_url)
+    release_page = requests.get(release_url)
+    soup = BeautifulSoup(release_page.text, 'html.parser')
+    a_links = soup.find_all('a', class_="Link--primary Link")
+    release_info = {
+        "repository_name": match.group(1) if match else None,
+        "last_tag_name": a_links[offset].text
+    }
+    return release_info
+
+
+# 获取指定仓库发行版的某个文件信息
+def get_git_release_file_info(repository_name, release_tag_name, search_text):
+    res = requests.get(f"https://github.com/{repository_name}/releases/tag/{release_tag_name}")
+    soup = BeautifulSoup(res.text, 'html.parser')
+    target_link = soup.find(string=lambda text: search_text in text)
+    if target_link is None:
+        return False
+    download_url = (
+            "https://github.com" +
+            target_link.find_parent('a').get('href')
+    )
+    parsed_url = urlparse(download_url)
+    file_name = os.path.basename(parsed_url.path)
+    return {
+        "file_name": file_name,
+        "download_url": download_url
+    }
