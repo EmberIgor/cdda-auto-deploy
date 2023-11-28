@@ -86,9 +86,10 @@ def save_overwrite(src):
     save_exists = os.path.isdir(os.path.join('./CDDA', 'save'))
     if save_exists:
         print("检测到旧存档，正在清空存档文件夹……")
-        # 删除目录下的所有内容
-        for filename in os.listdir(directory):
-            file_path = os.path.join(directory, filename)
+        # 递归地获取所有文件
+        all_files = get_all_files(directory)
+        # 使用tqdm显示进度条，进度条以文件数量为单位
+        for file_path in tqdm(all_files, desc="清空进度", unit="file"):
             try:
                 if os.path.isfile(file_path) or os.path.islink(file_path):
                     os.unlink(file_path)
@@ -219,3 +220,12 @@ def download_and_extract_release_file(file_name, download_url, extract_dir):
                 progress_bar.update(1)
     # 解压完成后删除原文件
     os.remove(file_name)
+
+
+def get_all_files(directory):
+    """递归地获取目录中所有文件的路径"""
+    all_files = []
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            all_files.append(os.path.join(root, file))
+    return all_files
